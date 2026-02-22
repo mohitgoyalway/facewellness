@@ -61,30 +61,30 @@ app.post('/analyze', async (req, res) => {
 
     const prompt = `
       Perform a deep, professional facial wellness analysis on this image. 
-      For each category, provide a numeric score (1-100, where 100 is optimal/healthy) and a concise observation (max 12 words).
+      For each category, provide a numeric score (1-100, where 100 is optimal/healthy) and a very concise observation (max 10 words).
       
-      Categories for Analysis:
-      1. Vitality Index (Overall energy & stress)
-      2. Skin Resilience (Hydration & texture)
-      3. Rest Quality (Sleep indicators)
-      4. Biological Age (Estimate range)
-      5. Cardiovascular Harmony (Blood pressure cues)
-      6. Metabolic Balance (Diabetes/Sugar cues)
-      7. Internal Filter (Liver health cues)
+      Simplified Categories for Analysis:
+      1. Energy Level (Instead of Vitality Index)
+      2. Skin Health (Instead of Skin Resilience)
+      3. Sleep Quality (Instead of Rest Quality)
+      4. Face Age (Instead of Biological Age)
+      5. Heart Health (Instead of Cardiovascular Harmony)
+      6. Sugar Balance (Instead of Metabolic Balance)
+      7. Liver Health (Instead of Internal Filter)
       
       Archetype Analysis:
-      8. Mahabharat Character: Based on facial features (eyes, jawline, forehead, presence/absence of beard, gender), identify the most matching character (e.g., Arjuna for focus, Bhima for strength, Karna for resilience, Krishna for wisdom, Draupadi for fire, Bhishma for discipline, Sahadeva for intellect). Provide the name, a "why" reason, and their "aura" color.
+      8. Mahabharat Character: Based on facial features (eyes, jawline, forehead, presence/absence of beard, gender), identify the most matching character (Arjuna, Bhima, Karna, Krishna, Draupadi, Bhishma, Sahadeva). Provide the name, a brief "why" reason, and their "aura" color.
       
       Wellness Insight:
-      9. Secret Tip: An ancient, "secret" wellness tip based on their specific results.
+      9. Secret Tip: An ancient, "secret" wellness tip.
 
       Return ONLY a JSON object with these exact keys: 
-      "vitality": {"score": number, "observation": "string"},
+      "energy": {"score": number, "observation": "string"},
       "skin": {"score": number, "observation": "string"},
-      "rest": {"score": number, "observation": "string"},
+      "sleep": {"score": number, "observation": "string"},
       "age": {"range": "string", "observation": "string"},
-      "cardio": {"score": number, "observation": "string"},
-      "metabolic": {"score": number, "observation": "string"},
+      "heart": {"score": number, "observation": "string"},
+      "sugar": {"score": number, "observation": "string"},
       "liver": {"score": number, "observation": "string"},
       "archetype": {"name": "string", "reason": "string", "aura": "string"},
       "recommendation": {"action": "string"},

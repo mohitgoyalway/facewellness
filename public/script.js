@@ -174,72 +174,75 @@ function showResults(data) {
     resultsGrid.innerHTML = '';
 
     const categories = [
-        { key: 'vitality', label: 'Vitality Index' },
-        { key: 'skin', label: 'Skin Resilience' },
-        { key: 'rest', label: 'Rest Quality' },
-        { key: 'age', label: 'Biological Age' },
-        { key: 'cardio', label: 'Cardio Harmony' },
-        { key: 'metabolic', label: 'Metabolic Balance' },
-        { key: 'liver', label: 'Internal Filter' }
+        { key: 'energy', label: 'Energy Level' },
+        { key: 'skin', label: 'Skin Health' },
+        { key: 'sleep', label: 'Sleep Quality' },
+        { key: 'age', label: 'Face Age' },
+        { key: 'heart', label: 'Heart Health' },
+        { key: 'sugar', label: 'Sugar Balance' },
+        { key: 'liver', label: 'Liver Health' }
     ];
+
+    const getScoreColor = (score) => {
+        if (score > 80) return '#4caf50';
+        if (score > 60) return '#ff9800';
+        return '#f44336';
+    };
 
     categories.forEach(cat => {
         const item = data[cat.key];
         if (!item) return;
 
-        const card = document.createElement('div');
-        const score = item.score || 0;
-        const colorClass = score > 80 ? 'score-high' : (score > 60 ? 'score-medium' : 'score-low');
+        const row = document.createElement('div');
+        row.className = 'result-row';
         
-        card.className = `score-card ${colorClass}`;
-        card.style.cssText = `
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--glass-border);
-            padding: 1.5rem;
-            border-radius: 15px;
-            text-align: left;
-        `;
+        const score = item.score || item.range || '--';
+        const color = typeof score === 'number' ? getScoreColor(score) : '#fff';
         
-        card.innerHTML = `
-            <h3 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1rem;">${cat.label}</h3>
-            <div class="score-display" style="display: flex; align-items: baseline; gap: 5px;">
-                <span class="score-value" style="font-size: 2.2rem; font-family: var(--font-heading); font-weight: 600;">${score || item.range || '--'}</span>
-                <span style="opacity: 0.3; font-size: 0.8rem;">${score ? '/100' : ''}</span>
-            </div>
-            <p style="font-size: 0.85rem; opacity: 0.8; margin-top: 10px;">${item.observation || ''}</p>
+        row.innerHTML = `
+            <div class="label">${cat.label}</div>
+            <div class="score" style="color: ${color}">${score}</div>
+            <div class="observation">${item.observation || ''}</div>
         `;
-        resultsGrid.appendChild(card);
+        resultsGrid.appendChild(row);
     });
 
-    // Create Archetype Card
+    // Character Mapping for Icons
+    const charIcons = {
+        'Arjuna': '🏹',
+        'Bhima': '🔨',
+        'Karna': '🛡️',
+        'Krishna': '🪈',
+        'Draupadi': '🔥',
+        'Bhishma': '📜',
+        'Sahadeva': '⚖️',
+        'Nakula': '🐎',
+        'Yudhisthira': '👑'
+    };
+
     const arch = data.archetype;
     if (arch) {
-        const archetypeCard = document.createElement('div');
-        archetypeCard.className = 'archetype-card';
-        archetypeCard.style.setProperty('--aura-color', arch.aura || '#fff');
-        archetypeCard.innerHTML = `
-            <div class="character-aura-display">
-                <span class="char-icon">🔱</span>
-            </div>
-            <div class="archetype-info">
-                <h4>MAHABHARAT ARCHETYPE</h4>
-                <h2>${arch.name}</h2>
-                <p>${arch.reason}</p>
-            </div>
-        `;
+        const charName = arch.name.trim();
+        const icon = charIcons[charName] || '🔱';
         
-        const tipPanel = document.createElement('div');
-        tipPanel.className = 'secret-tip-panel';
-        tipPanel.style.marginTop = '2rem';
-        tipPanel.innerHTML = `
-            <p>"${data.secretTip ? data.secretTip.tip : 'Practice daily mindful breathing for longevity.'}"</p>
+        const archSection = document.createElement('div');
+        archSection.style.gridColumn = "1 / -1";
+        archSection.innerHTML = `
+            <div class="archetype-card" style="--aura-color: ${arch.aura || '#fff'}">
+                <div class="character-display">
+                    <span class="char-icon">${icon}</span>
+                </div>
+                <div class="archetype-info">
+                    <h4 style="font-size: 0.7rem; letter-spacing: 2px; opacity: 0.6; margin-bottom: 5px;">DIVINE ARCHETYPE</h4>
+                    <h2 style="font-family: var(--font-heading); font-size: 2rem; margin-bottom: 10px;">${charName}</h2>
+                    <p style="font-size: 0.9rem; opacity: 0.8;">${arch.reason}</p>
+                </div>
+            </div>
+            <div class="secret-tip-panel" style="margin-top: 1.5rem;">
+                <p>"${data.secretTip ? data.secretTip.tip : 'Practice daily mindful breathing for longevity.'}"</p>
+            </div>
         `;
-
-        const container = document.createElement('div');
-        container.className = 'archetype-container';
-        container.appendChild(archetypeCard);
-        container.appendChild(tipPanel);
-        resultsGrid.appendChild(container);
+        resultsGrid.appendChild(archSection);
     }
 
     if (data.recommendation) {
