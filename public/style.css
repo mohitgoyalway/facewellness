@@ -278,83 +278,102 @@ header {
 .results-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 2rem;
-    margin-bottom: 3rem;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
 }
 
-.score-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--glass-border);
-    padding: 2rem;
-    border-radius: 15px;
-    text-align: left;
-    transition: transform 0.3s;
-}
-
-.score-card:hover {
-    transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.score-card h3 {
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: var(--text-secondary);
-    margin-bottom: 1.5rem;
-}
-
-.score-display {
+/* Archetype & Tip Cards */
+.archetype-container {
+    grid-column: 1 / -1;
     display: flex;
-    align-items: baseline;
-    gap: 10px;
-    margin-bottom: 1rem;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 1rem;
 }
 
-.score-value {
+.archetype-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    padding: 2.5rem;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+}
+
+.character-aura-display {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    flex-shrink: 0;
+    box-shadow: 0 0 40px var(--aura-color, #fff);
+    border: 2px solid var(--aura-color, #fff);
+}
+
+.character-aura-display .char-icon {
     font-size: 3rem;
-    font-weight: 600;
-    font-family: var(--font-heading);
+    z-index: 2;
 }
 
-.score-total {
-    font-size: 1rem;
-    opacity: 0.3;
-}
-
-.score-observation {
-    font-size: 0.9rem;
-    line-height: 1.6;
-    color: var(--text-primary);
-    opacity: 0.8;
-}
-
-.recommendation-panel {
-    background: var(--accent-color);
-    color: var(--bg-color);
-    padding: 2rem;
-    border-radius: 15px;
-    text-align: center;
-}
-
-.recommendation-panel h4 {
+.archetype-info h4 {
     font-size: 0.8rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    margin-bottom: 1rem;
-    opacity: 0.7;
+    color: var(--text-secondary);
+    letter-spacing: 3px;
+    margin-bottom: 0.5rem;
 }
 
-.recommendation-panel p {
+.archetype-info h2 {
     font-family: var(--font-heading);
-    font-size: 1.4rem;
-    font-weight: 600;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
 }
 
-/* Score Coloring Classes */
-.score-high .score-value { color: var(--score-high); }
-.score-medium .score-value { color: var(--score-medium); }
-.score-low .score-value { color: var(--score-low); }
+.archetype-info p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    max-width: 500px;
+}
+
+.secret-tip-panel {
+    background: linear-gradient(135deg, #1e293b 0%, #0d1117 100%);
+    border: 1px solid #c5a059; /* Gold border for secret tip */
+    padding: 2.5rem;
+    border-radius: 20px;
+    text-align: center;
+    position: relative;
+}
+
+.secret-tip-panel::before {
+    content: '★ SECRET TIP ★';
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #c5a059;
+    color: #000;
+    font-size: 0.7rem;
+    padding: 4px 15px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.secret-tip-panel p {
+    font-style: italic;
+    font-family: var(--font-heading);
+    font-size: 1.3rem;
+    color: #e2e8f0;
+}
+
+@media (max-width: 768px) {
+    .archetype-card { flex-direction: column; text-align: center; gap: 1.5rem; }
+}
 
 .hidden { display: none !important; }
 

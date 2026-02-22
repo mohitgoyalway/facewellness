@@ -60,22 +60,35 @@ app.post('/analyze', async (req, res) => {
     }
 
     const prompt = `
-      Perform a professional facial wellness analysis on this image. 
-      For each of the following categories, provide a numeric score (1-100, where 100 is optimal) and a concise observation (max 15 words).
+      Perform a deep, professional facial wellness analysis on this image. 
+      For each category, provide a numeric score (1-100, where 100 is optimal/healthy) and a concise observation (max 12 words).
       
-      Categories:
-      1. Vitality Index (Reflects stress and energy levels)
-      2. Skin Resilience (Texture, clarity, and hydration)
-      3. Rest Quality (Signs of sleep debt or fatigue)
-      4. Biological Age Estimate (Numeric range)
-      5. Wellness Recommendation (A single, actionable habit)
+      Categories for Analysis:
+      1. Vitality Index (Overall energy & stress)
+      2. Skin Resilience (Hydration & texture)
+      3. Rest Quality (Sleep indicators)
+      4. Biological Age (Estimate range)
+      5. Cardiovascular Harmony (Blood pressure cues)
+      6. Metabolic Balance (Diabetes/Sugar cues)
+      7. Internal Filter (Liver health cues)
+      
+      Archetype Analysis:
+      8. Mahabharat Character: Based on facial features (eyes, jawline, forehead, presence/absence of beard, gender), identify the most matching character (e.g., Arjuna for focus, Bhima for strength, Karna for resilience, Krishna for wisdom, Draupadi for fire, Bhishma for discipline, Sahadeva for intellect). Provide the name, a "why" reason, and their "aura" color.
+      
+      Wellness Insight:
+      9. Secret Tip: An ancient, "secret" wellness tip based on their specific results.
 
       Return ONLY a JSON object with these exact keys: 
       "vitality": {"score": number, "observation": "string"},
       "skin": {"score": number, "observation": "string"},
       "rest": {"score": number, "observation": "string"},
       "age": {"range": "string", "observation": "string"},
-      "recommendation": {"action": "string"}
+      "cardio": {"score": number, "observation": "string"},
+      "metabolic": {"score": number, "observation": "string"},
+      "liver": {"score": number, "observation": "string"},
+      "archetype": {"name": "string", "reason": "string", "aura": "string"},
+      "recommendation": {"action": "string"},
+      "secretTip": {"tip": "string"}
     `;
 
     const result = await model.generateContent([
