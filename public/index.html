@@ -3,36 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Face Analysis</title>
+    <title>BioScan AI | Facial Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <!-- Load face-api.js from CDN -->
+    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 </head>
-<body>
+<body class="dark-mode">
+    <div class="background-grid"></div>
     <div class="container">
         <header>
-            <h1>AI Face Analysis</h1>
-            <p>Upload a photo or take one with your camera for a detailed analysis.</p>
+            <h1 class="glow-text">BIOSCAN <span class="v2">v2.0</span></h1>
+            <p class="subtitle">Neural Network Facial Diagnostics</p>
         </header>
         
         <main>
-            <section class="upload-section">
-                <label for="imageUpload" class="upload-btn">
-                    <span>Select Photo / Take Picture</span>
-                    <input type="file" id="imageUpload" accept="image/*" capture="camera" hidden>
-                </label>
-            </section>
-
-            <section id="previewSection" class="preview-section hidden">
-                <div class="image-wrapper">
-                    <img id="imagePreview" alt="Your Photo">
-                    <div id="loadingOverlay" class="loading-overlay hidden">
-                        <div class="spinner"></div>
-                        <p>Analysing face...</p>
+            <div id="setupView" class="setup-view">
+                <div class="scanner-frame">
+                    <div class="placeholder-circle">
+                        <div class="pulse-ring"></div>
+                        <i class="camera-icon"></i>
                     </div>
                 </div>
-            </section>
+                <button id="startScanner" class="sci-fi-btn">INITIALIZE SYSTEM</button>
+            </div>
+
+            <div id="scannerView" class="scanner-view hidden">
+                <div class="video-container">
+                    <video id="video" autoplay muted playsinline></video>
+                    <canvas id="overlay"></canvas>
+                    <div class="scan-line"></div>
+                    <div class="corner tl"></div>
+                    <div class="corner tr"></div>
+                    <div class="corner bl"></div>
+                    <div class="corner br"></div>
+                    
+                    <div id="statusIndicator" class="status-indicator">
+                        <span class="status-dot"></span>
+                        <span id="statusText">WAITING FOR SUBJECT...</span>
+                    </div>
+                </div>
+
+                <div id="analysisOverlay" class="analysis-overlay hidden">
+                    <div class="progress-container">
+                        <svg class="progress-ring" width="120" height="120">
+                            <circle class="progress-ring__circle" stroke="var(--primary-glow)" stroke-width="4" fill="transparent" r="52" cx="60" cy="60"/>
+                        </svg>
+                        <div id="progressPercent" class="progress-percent">0%</div>
+                    </div>
+                    <p class="analysis-text">ANALYZING BIOMETRICS...</p>
+                    <div class="data-stream" id="dataStream"></div>
+                </div>
+            </div>
 
             <section id="resultsSection" class="results-section hidden">
-                <h2>Analysis Results</h2>
+                <div class="results-header">
+                    <h2>DIAGNOSTIC REPORT</h2>
+                    <button id="resetBtn" class="reset-btn">NEW SCAN</button>
+                </div>
                 <div class="results-grid" id="resultsGrid">
                     <!-- Results will be injected here -->
                 </div>
