@@ -5,7 +5,7 @@ const setupView = document.getElementById('setupView');
 const scannerView = document.getElementById('scannerView');
 const statusText = document.getElementById('statusText');
 const statusIndicator = document.querySelector('.status-indicator');
-const progressPercent = document.getElementById('progressPercent');
+const timerText = document.getElementById('timerText');
 const progressCircle = document.getElementById('progressCircle');
 const analysisOverlay = document.getElementById('analysisOverlay');
 const resultsSection = document.getElementById('resultsSection');
@@ -13,7 +13,7 @@ const resultsGrid = document.getElementById('resultsGrid');
 const resetBtn = document.getElementById('resetBtn');
 
 let isAnalyzing = false;
-const PROGRESS_MAX = 477.5; // Stroke dash array value
+const PROGRESS_MAX = 440; // 2 * PI * 70
 
 // Deep Biometric Globals
 let pulseSamples = [];
@@ -21,7 +21,7 @@ let respirationSamples = [];
 let blinkCount = 0;
 let eyeClosed = false;
 let scanStartTime = 0;
-const SCAN_DURATION = 15000; // 15 seconds for Deep Scan
+const SCAN_DURATION = 15000; // 15 seconds
 
 const faceMesh = new FaceMesh({
     locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
@@ -38,29 +38,57 @@ faceMesh.onResults(onResults);
 
 function onResults(results) {
     if (isAnalyzing) return;
+    
+    // Auto-align canvas if needed
+    if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+    }
+
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
     if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-        statusText.textContent = "BIOSCAN ACTIVE";
+        statusText.textContent = "SUBJECT READY";
+        statusIndicator.classList.add('active');
+        
         const landmarks = results.multiFaceLandmarks[0];
-        drawConnectors(ctx, landmarks, FACEMESH_TESSELATION, {color: '#C0C0C040', lineWidth: 0.5});
+        
+        // Draw standard face mesh - white/subtle
+        drawConnectors(ctx, landmarks, FACEMESH_TESSELATION, {color: '#ffffff30', lineWidth: 0.5});
+        
         if (scanStartTime > 0) {
             const now = Date.now();
             const elapsed = now - scanStartTime;
+            
             if (elapsed < SCAN_DURATION) {
+                // Tracking
                 pulseSamples.push({ t: elapsed, g: getForeheadGreen(landmarks, video) });
                 respirationSamples.push({ t: elapsed, y: landmarks[1].y });
                 detectBlink(landmarks);
+                
+                // Update UI Countdown
+                const remaining = ((SCAN_DURATION - elapsed) / 1000).toFixed(1);
+                timerText.textContent = `${remaining}s`;
                 updateProgress((elapsed / SCAN_DURATION) * 100);
             } else {
                 completeScan();
             }
         } else {
-            startPulseScan();
+            // Auto-Calibration phase (wait 1 second before starting timer)
+            statusText.textContent = "CALIBRATING...";
+            setTimeout(() => {
+                if (!scanStartTime && !isAnalyzing) {
+                    scanStartTime = Date.now();
+                    analysisOverlay.classList.remove('hidden');
+                }
+            }, 1000);
         }
     } else {
-        statusText.textContent = "ALIGN FACE...";
+        statusText.textContent = "ALIGN YOUR FACE";
+        statusIndicator.classList.remove('active');
         scanStartTime = 0;
+        analysisOverlay.classList.add('hidden');
     }
 }
 
@@ -84,15 +112,12 @@ function getForeheadGreen(landmarks, video) {
     return s / (d.length / 4);
 }
 
-function startPulseScan() {
-    scanStartTime = Date.now();
-    pulseSamples = []; respirationSamples = []; blinkCount = 0;
-    analysisOverlay.classList.remove('hidden');
-}
-
 async function completeScan() {
     isAnalyzing = true;
+    timerText.textContent = "0.0s";
     updateProgress(100);
+    
+    statusText.textContent = "PROCESSING DATA...";
     
     const bpm = calculateBPM(pulseSamples);
     const resp = calculateRespiration(respirationSamples);
@@ -151,45 +176,37 @@ function showResults(data) {
         video.srcObject.getTracks().forEach(t => t.stop());
         video.srcObject = null;
     }
-
     scannerView.classList.add('hidden');
     resultsSection.classList.remove('hidden');
     resultsGrid.innerHTML = '';
 
-    // Hero Section
     const hero = document.createElement('div');
     hero.className = 'wellness-hero';
     hero.style.gridColumn = "1 / -1";
     hero.innerHTML = `
         <h5 style="letter-spacing: 5px; opacity: 0.6; font-size: 0.7rem; margin-bottom: 20px;">BIO-WELLNESS INDEX</h5>
         <h1 style="font-size: 7rem; font-weight: 800; line-height: 1;">${data.wellnessIndex || '--'}</h1>
-        <p style="margin-top: 20px; color: #55ff55; font-size: 0.9rem; font-weight: 600;">
-            TOP ${100 - (data.percentile || 85)}% OF YOUR AGE GROUP
-        </p>
+        <p style="margin-top: 20px; color: #55ff55; font-size: 0.9rem; font-weight: 600;">TOP ${100 - (data.percentile || 85)}% OF AGE GROUP</p>
     `;
     resultsGrid.appendChild(hero);
 
-    // Vitals Card
     const vitalsCard = createCard("BIOMETRICS", "⚡");
     vitalsCard.innerHTML += `
         <div class="vital-item"><span>HEART RATE</span> <span class="val">${data.vitals.heartRate.value} BPM</span></div>
         <div class="vital-item"><span>RESPIRATION</span> <span class="val">${data.vitals.respiration.value} br/m</span></div>
         <div class="vital-item"><span>STRESS SCORE</span> <span class="val">${data.vitals.stress.score}/100</span></div>
-        <p style="font-size: 0.7rem; margin-top: 15px; line-height: 1.5; opacity: 0.6;">${data.vitals.stress.observation}</p>
     `;
     resultsGrid.appendChild(vitalsCard);
 
-    // Dermatology Card
     const dermCard = createCard("DERMATOLOGY", "🩺");
     dermCard.innerHTML += `
         ${createMetric("Skin Hydration", data.dermatology.hydration)}
         ${createMetric("UV Resistance", data.dermatology.uvDamage)}
-        ${createMetric("Pore Quality", data.dermatology.poreSize || 80)}
         ${createMetric("Acne Defense", 100 - data.dermatology.acne)}
+        ${createMetric("Pore Quality", data.dermatology.poreSize || 80)}
     `;
     resultsGrid.appendChild(dermCard);
 
-    // Systemic Card
     const systemicCard = createCard("SYSTEMIC SCAN", "🩸");
     systemicCard.innerHTML += `
         <div class="vital-item"><span>BIOLOGICAL AGE</span> <span class="val">${data.age.biologicalAge}</span></div>
@@ -199,7 +216,6 @@ function showResults(data) {
     `;
     resultsGrid.appendChild(systemicCard);
 
-    // Archetype Card
     if (data.archetype) {
         const icons = { 'Arjuna': '🏹', 'Bhima': '🔨', 'Karna': '🛡️', 'Krishna': '🪈', 'Vidura': '📜', 'Rama': '👑', 'Hanuman': '📿', 'Draupadi': '🔥' };
         const archeCard = document.createElement('div');
@@ -216,7 +232,6 @@ function showResults(data) {
         resultsGrid.appendChild(archeCard);
     }
 
-    // Secret Tip
     if (data.secretTip) {
         const tipPanel = document.createElement('div');
         tipPanel.className = 'secret-tip-panel';
@@ -224,7 +239,6 @@ function showResults(data) {
         resultsGrid.appendChild(tipPanel);
     }
 
-    // Reset Button
     const foot = document.createElement('div');
     foot.style.gridColumn = "1 / -1"; foot.style.marginTop = "3rem";
     foot.appendChild(resetBtn);
@@ -250,23 +264,25 @@ function createMetric(label, score) {
 
 function updateProgress(percent) {
     const rounded = Math.round(percent);
-    progressPercent.textContent = `${rounded}%`;
     progressCircle.style.strokeDashoffset = PROGRESS_MAX - (rounded / 100 * PROGRESS_MAX);
 }
 
 function resetScanner() {
     isAnalyzing = false;
     resultsSection.classList.add('hidden');
-    scannerView.classList.remove('hidden');
+    setupView.classList.remove('hidden');
     analysisOverlay.classList.add('hidden');
-    updateProgress(0);
     scanStartTime = 0;
 }
 
 startBtn.addEventListener('click', () => {
-    new Camera(video, { onFrame: async () => { await faceMesh.send({image: video}); }, width: 1280, height: 720 }).start();
     setupView.classList.add('hidden');
     scannerView.classList.remove('hidden');
+    new Camera(video, { 
+        onFrame: async () => { await faceMesh.send({image: video}); }, 
+        width: 1280, 
+        height: 720 
+    }).start();
 });
 
 resetBtn.addEventListener('click', resetScanner);

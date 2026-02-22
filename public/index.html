@@ -24,9 +24,9 @@
             <div id="setupView" class="view-panel">
                 <div class="hero-circle">
                     <div class="inner-pulse"></div>
-                    <div class="icon-camera"></div>
+                    <div class="icon-camera">👤</div>
                 </div>
-                <p class="instruction">Position yourself in good lighting for a precise biometric scan.</p>
+                <p class="instruction">Position yourself in good lighting for a 15-second deep biometric scan.</p>
                 <button id="startScanner" class="premium-btn">BEGIN SCAN</button>
             </div>
 
@@ -47,15 +47,15 @@
                     <div id="analysisOverlay" class="analysis-layer hidden">
                         <div class="glass-loader">
                             <svg class="progress-ring" width="160" height="160">
-                                <circle class="progress-ring__circle" stroke="rgba(255,255,255,0.2)" stroke-width="2" fill="transparent" r="76" cx="80" cy="80"/>
-                                <circle id="progressCircle" class="progress-ring__circle active" stroke="#fff" stroke-width="2" fill="transparent" r="76" cx="80" cy="80"/>
+                                <circle class="progress-ring__circle-bg" stroke="rgba(255,255,255,0.1)" stroke-width="4" fill="transparent" r="70" cx="80" cy="80"/>
+                                <circle id="progressCircle" class="progress-ring__circle" stroke="#55ff55" stroke-width="4" fill="transparent" r="70" cx="80" cy="80"/>
                             </svg>
                             <div class="loading-content">
-                                <span id="progressPercent" class="percent">0%</span>
-                                <span class="label">ANALYZING</span>
+                                <span id="timerText" class="percent">15.0s</span>
+                                <span class="label">SCANNING</span>
                             </div>
                         </div>
-                        <div class="shimmer-text">Processing biometric markers...</div>
+                        <div class="shimmer-text">Capturing multi-spectral heart & lung signals...</div>
                     </div>
                 </div>
             </div>
@@ -70,10 +70,6 @@
                 <div class="results-container">
                     <div id="resultsGrid" class="results-grid">
                         <!-- Score cards will be injected here -->
-                    </div>
-                    
-                    <div id="recommendationPanel" class="recommendation-panel">
-                        <!-- Recommendation will be injected here -->
                     </div>
                 </div>
             </section>
