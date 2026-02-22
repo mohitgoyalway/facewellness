@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wellness AI | Admin Console</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050505;
+            --accent: #00ff88;
+            --border: #333;
+            --text: #eee;
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Space Mono', monospace;
+            padding: 2rem;
+            margin: 0;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .card { border: 1px solid var(--border); padding: 1.5rem; border-radius: 8px; text-align: center; }
+        .card h3 { font-size: 0.8rem; opacity: 0.6; margin: 0; }
+        .card .value { font-size: 2.5rem; font-weight: bold; color: var(--accent); margin-top: 10px; display: block; }
+        .log-section { margin-top: 3rem; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--border); }
+        th { opacity: 0.5; font-weight: normal; }
+        .error-msg { color: #ff5555; }
+        .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; display: flex; justify-content: center; align-items: center; }
+        .login-box { text-align: center; border: 1px solid var(--border); padding: 3rem; border-radius: 12px; }
+        input { background: transparent; border: 1px solid var(--border); color: #fff; padding: 10px; width: 250px; text-align: center; font-size: 1rem; }
+        button { background: var(--accent); border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-box">
+            <h2>ADMIN CONSOLE</h2>
+            <input type="password" id="adminPassword" placeholder="Enter Credentials">
+            <br>
+            <button onclick="login()">AUTHORIZE</button>
+        </div>
+    </div>
+
+    <div id="adminContent" class="container hidden">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
+            <h1>ADMIN <span style="color: var(--accent);">CONSOLE</span></h1>
+            <button onclick="location.reload()" style="background: transparent; color: #fff; border: 1px solid #444;">REFRESH</button>
+        </header>
+
+        <div class="grid">
+            <div class="card">
+                <h3>TOTAL VISITS</h3>
+                <span id="statVisits" class="value">0</span>
+            </div>
+            <div class="card">
+                <h3>TOTAL SCANS</h3>
+                <span id="statScans" class="value">0</span>
+            </div>
+            <div class="card">
+                <h3>SUCCESSFUL RESULTS</h3>
+                <span id="statResults" class="value">0</span>
+            </div>
+            <div class="card">
+                <h3>SYSTEM ERRORS</h3>
+                <span id="statErrors" class="value" style="color: #ff5555;">0</span>
+            </div>
+        </div>
+
+        <div class="log-section">
+            <h2>LATEST ERROR LOGS</h2>
+            <table id="errorTable">
+                <thead>
+                    <tr>
+                        <th>TIMESTAMP</th>
+                        <th>ERROR MESSAGE</th>
+                        <th>CONTEXT</th>
+                    </tr>
+                </thead>
+                <tbody id="errorLogs"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        async function login() {
+            const password = document.getElementById('adminPassword').value;
+            const res = await fetch('/api/stats', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                renderStats(data);
+                document.getElementById('loginOverlay').classList.add('hidden');
+                document.getElementById('adminContent').classList.remove('hidden');
+            } else {
+                alert('ACCESS DENIED');
+            }
+        }
+
+        function renderStats(data) {
+            document.getElementById('statVisits').textContent = data.visits;
+            document.getElementById('statScans').textContent = data.scans;
+            document.getElementById('statResults').textContent = data.results;
+            document.getElementById('statErrors').textContent = data.errors.length;
+
+            const tbody = document.getElementById('errorLogs');
+            tbody.innerHTML = '';
+            data.errors.forEach(err => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${new Date(err.timestamp).toLocaleString()}</td>
+                    <td class="error-msg">${err.message}</td>
+                    <td>${err.stack}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    </script>
+</body>
+</html>

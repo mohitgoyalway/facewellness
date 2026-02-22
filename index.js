@@ -1,22 +1,57 @@
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
+const STATS_FILE = path.join(__dirname, 'data', 'stats.json');
+
+// Helper to manage stats
+const getStats = () => {
+  try {
+    return JSON.parse(fs.readFileSync(STATS_FILE, 'utf8'));
+  } catch (e) {
+    return { visits: 0, scans: 0, results: 0, errors: [] };
+  }
+};
+
+const updateStats = (updater) => {
+  const stats = getStats();
+  updater(stats);
+  fs.writeFileSync(STATS_FILE, JSON.stringify(stats, null, 2));
+};
 
 // Increase limit for base64 image data
 app.use(express.json({ limit: '10mb' }));
+
+// Tracking Middleware
+app.get('/', (req, res, next) => {
+  updateStats(s => s.visits++);
+  next();
+});
+
 app.use(express.static('public'));
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+
+// Admin Stats Endpoint (Basic Auth)
+app.post('/api/stats', (req, res) => {
+  const { password } = req.body;
+  if (password !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  res.json(getStats());
+});
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK' });
 });
 
 app.post('/analyze', async (req, res) => {
+  updateStats(s => s.scans++);
   try {
     const { imageBase64, mimeType } = req.body;
 
@@ -72,8 +107,18 @@ app.post('/analyze', async (req, res) => {
     }
 
     res.json(jsonOutput);
+    updateStats(s => s.results++);
   } catch (error) {
     console.error('Analysis error:', error);
+    const errorEntry = {
+      timestamp: new Date().toISOString(),
+      message: error.message,
+      stack: error.stack ? error.stack.split('\n')[0] : ''
+    };
+    updateStats(s => {
+      s.errors.unshift(errorEntry);
+      if (s.errors.length > 50) s.errors.pop(); // Keep only last 50
+    });
     res.status(500).json({ error: 'Failed to analyze image', details: error.message });
   }
 });
