@@ -12,9 +12,5 @@ app_port: 7860
 
 A premium AI-powered facial biometric analysis tool.
 
-### Features
-- 7 Health & Vitality Metrics
-- Mahabharat Character Archetype Mapping
-- Automated Face Detection & Scanning
-- Secure Admin Dashboard
-- Private & Local-First Processing
+### Version
+1.0.1 - Deployment Live
