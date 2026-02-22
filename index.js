@@ -79,7 +79,7 @@ app.get('/health', (req, res) => {
 app.post('/analyze', async (req, res) => {
   updateStats(s => s.scans++);
   try {
-    const { imageBase64, mimeType } = req.body;
+    const { imageBase64, mimeType, bpm } = req.body;
 
     if (!imageBase64 || !mimeType) {
       return res.status(400).json({ error: 'Image data and mimeType are required' });
@@ -87,11 +87,13 @@ app.post('/analyze', async (req, res) => {
 
     const prompt = `
       Perform a deep, professional facial wellness analysis on this image. 
-      Analyze the following visual markers to determine scores:
+      The user's measured Heart Rate (BPM) during the scan was: ${bpm || 'N/A'} BPM.
+      
+      Analyze the following visual markers and correlate them with the BPM if available:
       - Energy: Eye brightness, posture, muscle tone.
       - Skin: Texture, hydration, evenness, dark circles.
       - Sleep: Under-eye bags, puffiness, redness in eyes.
-      - Heart: Skin flushing, earlobe creases, overall circulation appearance.
+      - Heart: Correlate the provided BPM (${bpm}) with visual signs like skin flushing, earlobe creases, and overall circulation appearance. If BPM is high, look for signs of stress.
       - Sugar: Skin tags, acanthosis nigricans, facial puffiness.
       - Liver: Scleral icterus (yellowing of eyes), skin tone clarity.
 
