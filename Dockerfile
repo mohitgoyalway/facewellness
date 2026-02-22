@@ -4,7 +4,7 @@ FROM node:20-slim
 # Create a non-root user for security (Hugging Face requirement)
 RUN useradd -m -u 1000 user
 USER user
-ENV HOME=/home/user 
+ENV HOME=/home/user \
     PATH=/home/user/.local/bin:$PATH
 
 WORKDIR $HOME/app
