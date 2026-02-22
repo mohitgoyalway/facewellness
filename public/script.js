@@ -186,6 +186,28 @@ function showResults(data) {
     resultsSection.classList.remove('hidden');
     resultsGrid.innerHTML = '';
 
+    // Hero Section for Wellness Index & Percentile
+    if (data.wellnessIndex) {
+        const hero = document.createElement('div');
+        hero.className = 'wellness-hero';
+        hero.style.gridColumn = "1 / -1";
+        hero.style.textAlign = "center";
+        hero.style.padding = "2rem";
+        hero.style.background = "rgba(255, 255, 255, 0.05)";
+        hero.style.borderRadius = "15px";
+        hero.style.marginBottom = "2rem";
+        hero.style.border = "1px solid rgba(255, 255, 255, 0.1)";
+
+        hero.innerHTML = `
+            <div style="font-size: 0.8rem; letter-spacing: 3px; opacity: 0.6; margin-bottom: 10px;">OVERALL WELLNESS INDEX</div>
+            <div style="font-size: 5rem; font-weight: 800; color: #fff; line-height: 1;">${data.wellnessIndex}</div>
+            <div style="margin-top: 15px; font-size: 0.9rem; color: #55ff55;">
+                Top ${100 - data.percentile}% of users in your age group (${data.age ? data.age.range : '--'})
+            </div>
+        `;
+        resultsGrid.appendChild(hero);
+    }
+
     const categories = [
         { key: 'energy', label: 'Energy Level' },
         { key: 'skin', label: 'Skin Health' },

@@ -7,6 +7,7 @@ require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 3000;
 const STATS_FILE = path.join(__dirname, 'data', 'stats.json');
+const HISTORY_FILE = path.join(__dirname, 'data', 'history.json');
 
 // Helper to manage stats
 const getStats = () => {
@@ -15,6 +16,31 @@ const getStats = () => {
   } catch (e) {
     return { visits: 0, scans: 0, results: 0, errors: [] };
   }
+};
+
+const getHistory = () => {
+  try {
+    return JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf8'));
+  } catch (e) {
+    return [];
+  }
+};
+
+const saveHistory = (record) => {
+  const history = getHistory();
+  history.push({ ...record, timestamp: new Date().toISOString() });
+  // Keep last 1000 records
+  if (history.length > 1000) history.shift();
+  fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2));
+};
+
+const calculatePercentile = (ageRange, wellnessIndex) => {
+  const history = getHistory();
+  const sameAgeHistory = history.filter(h => h.ageRange === ageRange);
+  if (sameAgeHistory.length < 5) return 85; // Default for low sample size
+  
+  const lowerScores = sameAgeHistory.filter(h => h.wellnessIndex <= wellnessIndex).length;
+  return Math.round((lowerScores / sameAgeHistory.length) * 100);
 };
 
 const updateStats = (updater) => {
@@ -61,6 +87,14 @@ app.post('/analyze', async (req, res) => {
 
     const prompt = `
       Perform a deep, professional facial wellness analysis on this image. 
+      Analyze the following visual markers to determine scores:
+      - Energy: Eye brightness, posture, muscle tone.
+      - Skin: Texture, hydration, evenness, dark circles.
+      - Sleep: Under-eye bags, puffiness, redness in eyes.
+      - Heart: Skin flushing, earlobe creases, overall circulation appearance.
+      - Sugar: Skin tags, acanthosis nigricans, facial puffiness.
+      - Liver: Scleral icterus (yellowing of eyes), skin tone clarity.
+
       For each category, provide a numeric score (1-100, where 100 is optimal/healthy) and a very concise observation (max 10 words).
       
       Simplified Categories for Analysis:
@@ -73,7 +107,9 @@ app.post('/analyze', async (req, res) => {
       7. Liver Health (Instead of Internal Filter)
       
       Archetype Analysis:
-      8. Mahabharat Character: Based on facial features (eyes, jawline, forehead, presence/absence of beard, gender), identify the most matching character (Arjuna, Bhima, Karna, Krishna, Draupadi, Bhishma, Sahadeva). Provide the name, a brief "why" reason, and their "aura" color.
+      8. Ancient Archetype: Based on facial features (eyes, jawline, forehead, presence/absence of beard, gender), identify the most matching character from the Mahabharat, Ramayana, or Manusmriti. 
+      Include famous figures (Arjuna, Rama, Krishna, Draupadi, Bhishma) or underrated ones such as Barbarika (moral paradox), Ulupi (complex emotion), Iravan (sacrifice), Ekalavya (suppressed talent), Yuyutsu (moral courage), Hidimbi (independent strength), Vidura (ethical wisdom), Mandodari (wise ethics), Shabari (pure devotion), Jambavan (ancient wisdom), Urmila (silent sacrifice), Ahiravan (underworld power), Sulochana (loyal strength), or Manu/Bhrigu (foundational wisdom).
+      Provide the name, the epic/text they belong to, a brief "why" reason connecting their facial expression to their core theme, and their "aura" color.
       
       Wellness Insight:
       9. Secret Tip: An ancient, "secret" wellness tip.
@@ -117,6 +153,26 @@ app.post('/analyze', async (req, res) => {
     } catch (e) {
       console.warn('JSON parsing failed, returning raw text.', e);
       jsonOutput = { raw: text };
+    }
+
+    // Add extra calculated fields
+    if (jsonOutput.energy && jsonOutput.skin && jsonOutput.sleep && jsonOutput.heart && jsonOutput.sugar && jsonOutput.liver) {
+        const scores = [
+            jsonOutput.energy.score, 
+            jsonOutput.skin.score, 
+            jsonOutput.sleep.score, 
+            jsonOutput.heart.score, 
+            jsonOutput.sugar.score, 
+            jsonOutput.liver.score
+        ].filter(s => typeof s === 'number');
+        
+        const wellnessIndex = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+        const ageRange = jsonOutput.age ? jsonOutput.age.range : 'Unknown';
+        
+        jsonOutput.wellnessIndex = wellnessIndex;
+        jsonOutput.percentile = calculatePercentile(ageRange, wellnessIndex);
+        
+        saveHistory({ ageRange, wellnessIndex });
     }
 
     res.json(jsonOutput);
