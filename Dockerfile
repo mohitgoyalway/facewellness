@@ -1,22 +1,21 @@
 # Use official Node.js image
 FROM node:20-slim
 
-# Create a non-root user for security (Hugging Face requirement)
-RUN useradd -m -u 1000 user
-USER user
-ENV HOME=/home/user \
-    PATH=/home/user/.local/bin:$PATH
+# The 'node' user already exists with UID 1000 in this image
+USER node
+ENV HOME=/home/node \
+    PATH=/home/node/.local/bin:$PATH
 
 WORKDIR $HOME/app
 
-# Copy package files and install dependencies
-COPY --chown=user package*.json ./
+# Copy package files and install dependencies with correct ownership
+COPY --chown=node package*.json ./
 RUN npm install
 
 # Copy the rest of the application
-COPY --chown=user . .
+COPY --chown=node . .
 
-# Ensure data directory exists and is writable
+# Ensure data directory exists
 RUN mkdir -p data
 
 # Hugging Face Spaces default port is 7860
