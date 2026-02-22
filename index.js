@@ -118,9 +118,14 @@ app.post('/analyze', async (req, res) => {
          - Create a composite "Overall Wellness Score" (1-100) based on vitals, skin, and systemic signs.
 
       6. ARCHETYPE ANALYSIS:
-         - (Same as before: Mahabharat, Ramayana, or Manusmriti character based on facial features).
+         - Ancient Archetype: Based on facial features (eyes, jawline, forehead, presence/absence of beard, gender), identify the most matching character from the Mahabharat, Ramayana, or Manusmriti. 
+         - Include famous figures (Arjuna, Rama, Krishna, Draupadi, Bhishma) or underrated ones such as Barbarika (moral paradox), Ulupi (complex emotion), Iravan (sacrifice), Ekalavya (suppressed talent), Yuyutsu (moral courage), Hidimbi (independent strength), Vidura (ethical wisdom), Mandodari (wise ethics), Shabari (pure devotion), Jambavan (ancient wisdom), Urmila (silent sacrifice), Ahiravan (underworld power), Sulochana (loyal strength), or Manu/Bhrigu (foundational wisdom).
+         - Provide the name, the epic/text they belong to, a brief "why" reason connecting their facial expression to their core theme, and their "aura" color.
 
-      Return ONLY a JSON object with this structure:
+      7. WELLNESS INSIGHT:
+         - Secret Tip: An ancient, "secret" wellness tip.
+
+      Return ONLY a JSON object with this exact structure:
       {
         "vitals": {
           "heartRate": {"value": number, "status": "string"},
@@ -148,27 +153,6 @@ app.post('/analyze', async (req, res) => {
         "secretTip": {"tip": "string"}
       }
     `;
-      
-      Archetype Analysis:
-      8. Ancient Archetype: Based on facial features (eyes, jawline, forehead, presence/absence of beard, gender), identify the most matching character from the Mahabharat, Ramayana, or Manusmriti. 
-      Include famous figures (Arjuna, Rama, Krishna, Draupadi, Bhishma) or underrated ones such as Barbarika (moral paradox), Ulupi (complex emotion), Iravan (sacrifice), Ekalavya (suppressed talent), Yuyutsu (moral courage), Hidimbi (independent strength), Vidura (ethical wisdom), Mandodari (wise ethics), Shabari (pure devotion), Jambavan (ancient wisdom), Urmila (silent sacrifice), Ahiravan (underworld power), Sulochana (loyal strength), or Manu/Bhrigu (foundational wisdom).
-      Provide the name, the epic/text they belong to, a brief "why" reason connecting their facial expression to their core theme, and their "aura" color.
-      
-      Wellness Insight:
-      9. Secret Tip: An ancient, "secret" wellness tip.
-
-      Return ONLY a JSON object with these exact keys: 
-      "energy": {"score": number, "observation": "string"},
-      "skin": {"score": number, "observation": "string"},
-      "sleep": {"score": number, "observation": "string"},
-      "age": {"range": "string", "observation": "string"},
-      "heart": {"score": number, "observation": "string"},
-      "sugar": {"score": number, "observation": "string"},
-      "liver": {"score": number, "observation": "string"},
-      "archetype": {"name": "string", "reason": "string", "aura": "string"},
-      "recommendation": {"action": "string"},
-      "secretTip": {"tip": "string"}
-    `;
 
     const result = await model.generateContent([
       {
@@ -178,6 +162,7 @@ app.post('/analyze', async (req, res) => {
         }
       },
       prompt
+    ]);
     ]);
 
     const response = await result.response;
