@@ -96,12 +96,20 @@ app.post('/analyze', async (req, res) => {
     const result = await model.generateContent([{ inlineData: { data: imageBase64, mimeType: mimeType } }, prompt]);
     const response = await result.response;
     const text = response.text().trim();
+    console.log("Raw Gemini Response:", text);
     
     let jsonOutput;
     try {
       const start = text.indexOf('{'); const end = text.lastIndexOf('}') + 1;
-      jsonOutput = JSON.parse(text.substring(start, end));
-    } catch (e) { jsonOutput = { raw: text }; }
+      if (start !== -1 && end !== -1) {
+        jsonOutput = JSON.parse(text.substring(start, end));
+      } else {
+        throw new Error("Could not find JSON in response");
+      }
+    } catch (e) { 
+        console.error("JSON Parse Error:", e.message);
+        jsonOutput = { raw: text }; 
+    }
 
     const wellnessIndex = jsonOutput.wellnessIndex || 70;
     const ageRange = jsonOutput.age?.biologicalAge || 'Unknown';

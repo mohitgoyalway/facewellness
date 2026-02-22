@@ -118,10 +118,14 @@ async function completeScan() {
     updateProgress(100);
     
     statusText.textContent = "PROCESSING DATA...";
+    console.log("Scan complete. Calculating vitals...");
     
     const bpm = calculateBPM(pulseSamples);
     const resp = calculateRespiration(respirationSamples);
     const blinks = Math.round((blinkCount / (SCAN_DURATION / 1000)) * 60);
+    
+    const biometrics = { bpm, respiration: resp, blinkRate: blinks };
+    console.log("Calculated Biometrics:", biometrics);
     
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = video.videoWidth;
@@ -130,19 +134,29 @@ async function completeScan() {
     const base64Image = tempCanvas.toDataURL('image/jpeg').split(',')[1];
 
     try {
+        console.log("Sending data to /analyze...");
         const response = await fetch('/analyze', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 imageBase64: base64Image,
                 mimeType: 'image/jpeg',
-                biometrics: { bpm, respiration: resp, blinkRate: blinks }
+                biometrics: biometrics
             })
         });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Server responded with ${response.status}: ${errorText}`);
+        }
+
         const result = await response.json();
+        console.log("Analysis Result received:", result);
         showResults(result);
     } catch (err) {
-        console.error("Scan failed", err);
+        console.error("Analysis failed:", err);
+        statusText.textContent = "ANALYSIS FAILED";
+        alert("Bioscan link failed. Check connection or try again.");
         resetScanner();
     }
 }
