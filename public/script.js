@@ -192,10 +192,10 @@ function showResults(data) {
     // Systemic Card
     const systemicCard = createCard("SYSTEMIC SCAN", "🩸");
     systemicCard.innerHTML += `
+        <div class="vital-item"><span>BIOLOGICAL AGE</span> <span class="val">${data.age.biologicalAge}</span></div>
         <div class="vital-item"><span>ANEMIA RISK</span> <span class="val">${data.systemic.anemiaRisk.level}</span></div>
         <div class="vital-item"><span>JAUNDICE RISK</span> <span class="val">${data.systemic.jaundiceRisk.level}</span></div>
         <div class="vital-item"><span>SLEEP SCORE</span> <span class="val">${data.lifestyle.sleepQuality.score}/100</span></div>
-        <p style="font-size: 0.7rem; margin-top: 15px; opacity: 0.6;">INFERRED BIOLOGICAL AGE: ${data.age.biologicalAge}</p>
     `;
     resultsGrid.appendChild(systemicCard);
 
