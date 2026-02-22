@@ -127,14 +127,15 @@ async function completeScan() {
     const biometrics = { bpm, respiration: resp, blinkRate: blinks };
     console.log("Calculated Biometrics:", biometrics);
     
+    // Create a smaller canvas for the Gemini snapshot (Faster upload, lower timeout risk)
     const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = video.videoWidth;
-    tempCanvas.height = video.videoHeight;
-    tempCanvas.getContext('2d').drawImage(video, 0, 0);
-    const base64Image = tempCanvas.toDataURL('image/jpeg').split(',')[1];
+    tempCanvas.width = 640;
+    tempCanvas.height = 480;
+    tempCanvas.getContext('2d').drawImage(video, 0, 0, 640, 480);
+    const base64Image = tempCanvas.toDataURL('image/jpeg', 0.8).split(',')[1];
 
     try {
-        console.log("Sending data to /analyze...");
+        console.log("Sending optimized data to /analyze...");
         const response = await fetch('/analyze', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -146,8 +147,8 @@ async function completeScan() {
         });
 
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Server responded with ${response.status}: ${errorText}`);
+            const errorData = await response.json();
+            throw new Error(`Server Error: ${errorData.details || response.statusText}`);
         }
 
         const result = await response.json();
@@ -156,7 +157,7 @@ async function completeScan() {
     } catch (err) {
         console.error("Analysis failed:", err);
         statusText.textContent = "ANALYSIS FAILED";
-        alert("Bioscan link failed. Check connection or try again.");
+        alert(`Bioscan link failed: ${err.message}. Please check connection or try again.`);
         resetScanner();
     }
 }

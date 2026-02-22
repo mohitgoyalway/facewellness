@@ -39,7 +39,8 @@ const updateStats = (updater) => {
   fs.writeFileSync(STATS_FILE, JSON.stringify(stats, null, 2));
 };
 
-app.use(express.json({ limit: '10mb' }));
+// Increase limit for base64 image data
+app.use(express.json({ limit: '50mb' }));
 app.use(express.static('public'));
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -50,6 +51,8 @@ app.post('/analyze', async (req, res) => {
   try {
     const { imageBase64, mimeType, biometrics } = req.body;
     if (!imageBase64 || !mimeType) return res.status(400).json({ error: 'Image and mimeType required' });
+
+    console.log(`Starting Gemini analysis for biometrics: ${JSON.stringify(biometrics)}`);
 
     const prompt = `
       Perform a deep, professional facial wellness and biometric analysis on this image. 
@@ -119,6 +122,7 @@ app.post('/analyze', async (req, res) => {
     res.json(jsonOutput);
     updateStats(s => s.results++);
   } catch (error) {
+    console.error("Critical Gemini API Error:", error.message);
     res.status(500).json({ error: 'Analysis failed', details: error.message });
   }
 });
