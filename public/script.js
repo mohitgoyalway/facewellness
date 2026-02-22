@@ -6,22 +6,20 @@ const scannerView = document.getElementById('scannerView');
 const statusText = document.getElementById('statusText');
 const statusIndicator = document.querySelector('.status-indicator');
 const timerText = document.getElementById('timerText');
-const progressCircle = document.getElementById('progressCircle');
+const progressBarFill = document.getElementById('progressBarFill');
 const analysisOverlay = document.getElementById('analysisOverlay');
 const resultsSection = document.getElementById('resultsSection');
 const resultsGrid = document.getElementById('resultsGrid');
 const resetBtn = document.getElementById('resetBtn');
 
 let isAnalyzing = false;
-const PROGRESS_MAX = 440; // 2 * PI * 70
+const SCAN_DURATION = 15000;
 
-// Deep Biometric Globals
 let pulseSamples = [];
 let respirationSamples = [];
 let blinkCount = 0;
 let eyeClosed = false;
 let scanStartTime = 0;
-const SCAN_DURATION = 15000; // 15 seconds
 
 const faceMesh = new FaceMesh({
     locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
@@ -39,7 +37,7 @@ faceMesh.onResults(onResults);
 function onResults(results) {
     if (isAnalyzing) return;
     
-    // Auto-align canvas if needed
+    // Auto-align canvas
     if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
@@ -49,34 +47,36 @@ function onResults(results) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-        statusText.textContent = "SUBJECT READY";
+        statusText.textContent = "SUBJECT DETECTED";
         statusIndicator.classList.add('active');
         
         const landmarks = results.multiFaceLandmarks[0];
         
-        // Draw standard face mesh - white/subtle
-        drawConnectors(ctx, landmarks, FACEMESH_TESSELATION, {color: '#ffffff30', lineWidth: 0.5});
+        // DRAW PROMINENT MESH
+        // Tesselation - Bright and visible
+        drawConnectors(ctx, landmarks, FACEMESH_TESSELATION, {color: '#ffffff', lineWidth: 1});
+        // Key Contours - Blue highlight
+        drawConnectors(ctx, landmarks, FACEMESH_CONTOURS, {color: '#00d2ff', lineWidth: 1.5});
         
         if (scanStartTime > 0) {
             const now = Date.now();
             const elapsed = now - scanStartTime;
             
             if (elapsed < SCAN_DURATION) {
-                // Tracking
                 pulseSamples.push({ t: elapsed, g: getForeheadGreen(landmarks, video) });
                 respirationSamples.push({ t: elapsed, y: landmarks[1].y });
                 detectBlink(landmarks);
                 
-                // Update UI Countdown
+                // Update UI Linear Progress
                 const remaining = ((SCAN_DURATION - elapsed) / 1000).toFixed(1);
                 timerText.textContent = `${remaining}s`;
-                updateProgress((elapsed / SCAN_DURATION) * 100);
+                const progress = (elapsed / SCAN_DURATION) * 100;
+                progressBarFill.style.width = `${progress}%`;
             } else {
                 completeScan();
             }
         } else {
-            // Auto-Calibration phase (wait 1 second before starting timer)
-            statusText.textContent = "CALIBRATING...";
+            statusText.textContent = "STABILIZING...";
             setTimeout(() => {
                 if (!scanStartTime && !isAnalyzing) {
                     scanStartTime = Date.now();
@@ -89,6 +89,7 @@ function onResults(results) {
         statusIndicator.classList.remove('active');
         scanStartTime = 0;
         analysisOverlay.classList.add('hidden');
+        progressBarFill.style.width = '0%';
     }
 }
 
@@ -115,49 +116,32 @@ function getForeheadGreen(landmarks, video) {
 async function completeScan() {
     isAnalyzing = true;
     timerText.textContent = "0.0s";
-    updateProgress(100);
-    
-    statusText.textContent = "PROCESSING DATA...";
-    console.log("Scan complete. Calculating vitals...");
+    progressBarFill.style.width = '100%';
+    statusText.textContent = "PROCESSING...";
     
     const bpm = calculateBPM(pulseSamples);
     const resp = calculateRespiration(respirationSamples);
     const blinks = Math.round((blinkCount / (SCAN_DURATION / 1000)) * 60);
-    
     const biometrics = { bpm, respiration: resp, blinkRate: blinks };
-    console.log("Calculated Biometrics:", biometrics);
     
-    // Create a smaller canvas for the Gemini snapshot (Faster upload, lower timeout risk)
     const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = 640;
-    tempCanvas.height = 480;
+    tempCanvas.width = 640; tempCanvas.height = 480;
     tempCanvas.getContext('2d').drawImage(video, 0, 0, 640, 480);
     const base64Image = tempCanvas.toDataURL('image/jpeg', 0.8).split(',')[1];
 
     try {
-        console.log("Sending optimized data to /analyze...");
         const response = await fetch('/analyze', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                imageBase64: base64Image,
-                mimeType: 'image/jpeg',
-                biometrics: biometrics
-            })
+            body: JSON.stringify({ imageBase64: base64Image, mimeType: 'image/jpeg', biometrics: biometrics })
         });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`Server Error: ${errorData.details || response.statusText}`);
-        }
-
+        if (!response.ok) throw new Error(await response.text());
         const result = await response.json();
-        console.log("Analysis Result received:", result);
         showResults(result);
     } catch (err) {
         console.error("Analysis failed:", err);
-        statusText.textContent = "ANALYSIS FAILED";
-        alert(`Bioscan link failed: ${err.message}. Please check connection or try again.`);
+        statusText.textContent = "FAILED";
+        alert(`Analysis Error: ${err.message}`);
         resetScanner();
     }
 }
@@ -187,10 +171,7 @@ function detrend(arr) {
 }
 
 function showResults(data) {
-    if (video.srcObject) {
-        video.srcObject.getTracks().forEach(t => t.stop());
-        video.srcObject = null;
-    }
+    if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
     scannerView.classList.add('hidden');
     resultsSection.classList.remove('hidden');
     resultsGrid.innerHTML = '';
@@ -199,9 +180,9 @@ function showResults(data) {
     hero.className = 'wellness-hero';
     hero.style.gridColumn = "1 / -1";
     hero.innerHTML = `
-        <h5 style="letter-spacing: 5px; opacity: 0.6; font-size: 0.7rem; margin-bottom: 20px;">BIO-WELLNESS INDEX</h5>
-        <h1 style="font-size: 7rem; font-weight: 800; line-height: 1;">${data.wellnessIndex || '--'}</h1>
-        <p style="margin-top: 20px; color: #55ff55; font-size: 0.9rem; font-weight: 600;">TOP ${100 - (data.percentile || 85)}% OF AGE GROUP</p>
+        <h5 style="letter-spacing: 5px; opacity: 0.6; font-size: 0.6rem; margin-bottom: 20px;">BIO-WELLNESS INDEX</h5>
+        <h1 style="font-size: 5rem; font-weight: 800; line-height: 1;">${data.wellnessIndex || '--'}</h1>
+        <p style="margin-top: 20px; color: #55ff55; font-size: 0.8rem; font-weight: 600;">TOP ${100 - (data.percentile || 85)}% OF AGE GROUP</p>
     `;
     resultsGrid.appendChild(hero);
 
@@ -241,7 +222,7 @@ function showResults(data) {
             <div class="archetype-info">
                 <h5 style="letter-spacing: 5px; opacity: 0.6; font-size: 0.6rem; margin-bottom: 10px;">DIVINE ARCHETYPE</h5>
                 <h2>${data.archetype.name}</h2>
-                <p style="line-height: 1.6; opacity: 0.8; font-size: 0.9rem;">${data.archetype.reason}</p>
+                <p style="line-height: 1.6; opacity: 0.8; font-size: 0.85rem;">${data.archetype.reason}</p>
             </div>
         `;
         resultsGrid.appendChild(archeCard);
@@ -255,7 +236,7 @@ function showResults(data) {
     }
 
     const foot = document.createElement('div');
-    foot.style.gridColumn = "1 / -1"; foot.style.marginTop = "3rem";
+    foot.style.gridColumn = "1 / -1"; foot.style.marginTop = "2rem";
     foot.appendChild(resetBtn);
     resultsGrid.appendChild(foot);
 }
@@ -277,11 +258,6 @@ function createMetric(label, score) {
     `;
 }
 
-function updateProgress(percent) {
-    const rounded = Math.round(percent);
-    progressCircle.style.strokeDashoffset = PROGRESS_MAX - (rounded / 100 * PROGRESS_MAX);
-}
-
 function resetScanner() {
     isAnalyzing = false;
     resultsSection.classList.add('hidden');
@@ -295,8 +271,7 @@ startBtn.addEventListener('click', () => {
     scannerView.classList.remove('hidden');
     new Camera(video, { 
         onFrame: async () => { await faceMesh.send({image: video}); }, 
-        width: 1280, 
-        height: 720 
+        width: 1280, height: 720 
     }).start();
 });
 

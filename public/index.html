@@ -32,30 +32,31 @@
 
             <!-- SCANNER VIEW -->
             <div id="scannerView" class="view-panel hidden">
-                <div class="video-frame">
-                    <video id="video" autoplay muted playsinline></video>
-                    <canvas id="overlay"></canvas>
-                    
-                    <div id="scanStatus" class="scan-status-overlay">
-                        <div class="status-chip">
-                            <span class="status-indicator"></span>
-                            <span id="statusText">INITIALIZING...</span>
-                        </div>
-                    </div>
-
-                    <!-- Analysis Animation -->
-                    <div id="analysisOverlay" class="analysis-layer hidden">
-                        <div class="glass-loader">
-                            <svg class="progress-ring" width="160" height="160">
-                                <circle class="progress-ring__circle-bg" stroke="rgba(255,255,255,0.1)" stroke-width="4" fill="transparent" r="70" cx="80" cy="80"/>
-                                <circle id="progressCircle" class="progress-ring__circle" stroke="#55ff55" stroke-width="4" fill="transparent" r="70" cx="80" cy="80"/>
-                            </svg>
-                            <div class="loading-content">
-                                <span id="timerText" class="percent">15.0s</span>
-                                <span class="label">SCANNING</span>
+                <div class="video-container">
+                    <div class="video-frame">
+                        <video id="video" autoplay muted playsinline></video>
+                        <canvas id="overlay"></canvas>
+                        
+                        <div id="scanStatus" class="scan-status-overlay">
+                            <div class="status-chip">
+                                <span class="status-indicator"></span>
+                                <span id="statusText">INITIALIZING...</span>
                             </div>
                         </div>
-                        <div class="shimmer-text">Capturing multi-spectral heart & lung signals...</div>
+
+                        <!-- Linear Progress Overlay -->
+                        <div id="analysisOverlay" class="analysis-layer hidden">
+                            <div class="linear-timer-container">
+                                <div class="timer-meta">
+                                    <span class="label">ANALYZING FACIAL MARKERS</span>
+                                    <span id="timerText" class="time-val">15.0s</span>
+                                </div>
+                                <div class="progress-bar-bg">
+                                    <div id="progressBarFill" class="progress-bar-fill"></div>
+                                </div>
+                                <div class="shimmer-text">Deeply analyzing your facial markers...</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
