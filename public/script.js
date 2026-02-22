@@ -169,6 +169,19 @@ function updateProgress(percent) {
 }
 
 function showResults(data) {
+    // Stop Camera Stream
+    if (video.srcObject) {
+        const tracks = video.srcObject.getTracks();
+        tracks.forEach(track => track.stop());
+        video.srcObject = null;
+    }
+    
+    // Clear Detection Interval
+    if (detectionInterval) {
+        clearInterval(detectionInterval);
+        detectionInterval = null;
+    }
+
     scannerView.classList.add('hidden');
     resultsSection.classList.remove('hidden');
     resultsGrid.innerHTML = '';
