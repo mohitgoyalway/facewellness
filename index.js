@@ -163,7 +163,6 @@ app.post('/analyze', async (req, res) => {
       },
       prompt
     ]);
-    ]);
 
     const response = await result.response;
     const text = response.text().trim();
@@ -184,22 +183,11 @@ app.post('/analyze', async (req, res) => {
     }
 
     // Add extra calculated fields
-    if (jsonOutput.energy && jsonOutput.skin && jsonOutput.sleep && jsonOutput.heart && jsonOutput.sugar && jsonOutput.liver) {
-        const scores = [
-            jsonOutput.energy.score, 
-            jsonOutput.skin.score, 
-            jsonOutput.sleep.score, 
-            jsonOutput.heart.score, 
-            jsonOutput.sugar.score, 
-            jsonOutput.liver.score
-        ].filter(s => typeof s === 'number');
-        
-        const wellnessIndex = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-        const ageRange = jsonOutput.age ? jsonOutput.age.range : 'Unknown';
-        
-        jsonOutput.wellnessIndex = wellnessIndex;
+    const wellnessIndex = typeof jsonOutput.wellnessIndex === 'number' ? jsonOutput.wellnessIndex : 0;
+    const ageRange = jsonOutput.age ? (jsonOutput.age.faceAge || jsonOutput.age.biologicalAge || 'Unknown') : 'Unknown';
+
+    if (wellnessIndex > 0) {
         jsonOutput.percentile = calculatePercentile(ageRange, wellnessIndex);
-        
         saveHistory({ ageRange, wellnessIndex });
     }
 
