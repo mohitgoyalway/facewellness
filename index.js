@@ -25,15 +25,22 @@ app.post('/analyze', async (req, res) => {
     }
 
     const prompt = `
-      Analyze this image of a human face and provide estimates/insights for the following:
-      1. Stress level: (low, medium, high with explanation)
-      2. Tiredness: (not tired, slightly tired, very tired)
-      3. Estimated Age: (numeric range)
-      4. Visible skin observations: (e.g., texture, clarity, hydration)
-      5. Fatigue signs: (e.g., dark circles, puffiness)
-      6. Potential lifestyle habits based on facial cues: (e.g., hydration, sleep, sun exposure)
+      Perform a professional facial wellness analysis on this image. 
+      For each of the following categories, provide a numeric score (1-100, where 100 is optimal) and a concise observation (max 15 words).
+      
+      Categories:
+      1. Vitality Index (Reflects stress and energy levels)
+      2. Skin Resilience (Texture, clarity, and hydration)
+      3. Rest Quality (Signs of sleep debt or fatigue)
+      4. Biological Age Estimate (Numeric range)
+      5. Wellness Recommendation (A single, actionable habit)
 
-      Return ONLY the response as a structured JSON object with these keys: "stressLevel", "tiredness", "estimatedAge", "skinObservations", "fatigueSigns", "lifestyleHabits". Do not include any additional text or formatting.
+      Return ONLY a JSON object with these exact keys: 
+      "vitality": {"score": number, "observation": "string"},
+      "skin": {"score": number, "observation": "string"},
+      "rest": {"score": number, "observation": "string"},
+      "age": {"range": "string", "observation": "string"},
+      "recommendation": {"action": "string"}
     `;
 
     const result = await model.generateContent([

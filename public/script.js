@@ -4,22 +4,23 @@ const startBtn = document.getElementById('startScanner');
 const setupView = document.getElementById('setupView');
 const scannerView = document.getElementById('scannerView');
 const statusText = document.getElementById('statusText');
-const statusDot = document.querySelector('.status-dot');
+const statusIndicator = document.querySelector('.status-indicator');
 const progressPercent = document.getElementById('progressPercent');
-const progressCircle = document.querySelector('.progress-ring__circle');
+const progressCircle = document.getElementById('progressCircle');
 const analysisOverlay = document.getElementById('analysisOverlay');
-const dataStream = document.getElementById('dataStream');
 const resultsSection = document.getElementById('resultsSection');
 const resultsGrid = document.getElementById('resultsGrid');
+const recommendationPanel = document.getElementById('recommendationPanel');
 const resetBtn = document.getElementById('resetBtn');
 
 let isAnalyzing = false;
 let detectionInterval;
 let modelsLoaded = false;
+const PROGRESS_MAX = 477.5; // Stroke dash array value
 
 // Load face-api models
 async function loadModels() {
-    statusText.textContent = "LOADING NEURAL MODELS...";
+    statusText.textContent = "SYNCHRONIZING MODELS...";
     const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1/model/';
     
     try {
@@ -28,11 +29,11 @@ async function loadModels() {
             faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL)
         ]);
         modelsLoaded = true;
-        statusText.textContent = "SYSTEM READY";
-        statusDot.classList.add('active');
+        statusText.textContent = "SCANNER READY";
+        statusIndicator.classList.add('active');
     } catch (e) {
         console.error("Model load failed", e);
-        statusText.textContent = "MODEL ERROR";
+        statusText.textContent = "SYSTEM OFFLINE";
     }
 }
 
@@ -69,41 +70,41 @@ function startDetection() {
         if (isAnalyzing) return;
 
         const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
-        const resizedDetections = faceapi.resizeResults(detections, displaySize);
-        
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         if (detections.length > 0) {
             statusText.textContent = "SUBJECT DETECTED";
-            statusDot.style.background = "#00ff88";
+            statusIndicator.style.background = "#55ff55";
             
-            // Draw sci-fi box
+            // Premium scan frame
             detections.forEach(detection => {
                 const { x, y, width, height } = detection.detection.box;
-                drawSciFiBox(ctx, x, y, width, height);
+                drawPremiumBox(ctx, x, y, width, height);
             });
 
-            // Trigger analysis if face is stable (simplified: just trigger first detection)
+            // Trigger analysis automatically
             if (!isAnalyzing) {
                 triggerAnalysis();
             }
         } else {
-            statusText.textContent = "SCANNING FOR SUBJECT...";
-            statusDot.style.background = "#ff0000";
+            statusText.textContent = "ALIGN YOUR FACE...";
+            statusIndicator.style.background = "#ff5555";
         }
-    }, 200);
+    }, 250);
 }
 
-function drawSciFiBox(ctx, x, y, w, h) {
-    ctx.strokeStyle = '#00f3ff';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([20, 10]);
+function drawPremiumBox(ctx, x, y, w, h) {
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([5, 5]);
     ctx.strokeRect(x, y, w, h);
     ctx.setLineDash([]);
     
-    // Corner brackets
-    const len = 20;
+    // Corner brackets - minimal & elegant
+    const len = 15;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
     ctx.beginPath();
     // TL
     ctx.moveTo(x, y + len); ctx.lineTo(x, y); ctx.lineTo(x + len, y);
@@ -120,21 +121,19 @@ async function triggerAnalysis() {
     isAnalyzing = true;
     analysisOverlay.classList.remove('hidden');
     
-    // Capture current frame
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = video.videoWidth;
     tempCanvas.height = video.videoHeight;
     tempCanvas.getContext('2d').drawImage(video, 0, 0);
     const base64Image = tempCanvas.toDataURL('image/jpeg').split(',')[1];
 
-    // Progress Simulation
+    // Smooth Progress Simulation
     let progress = 0;
     const interval = setInterval(() => {
-        progress += Math.random() * 15;
-        if (progress > 95) progress = 95;
+        progress += Math.random() * 8;
+        if (progress > 98) progress = 98;
         updateProgress(progress);
-        updateDataStream();
-    }, 400);
+    }, 300);
 
     try {
         const response = await fetch('/analyze', {
@@ -153,7 +152,7 @@ async function triggerAnalysis() {
         
         setTimeout(() => {
             showResults(result);
-        }, 500);
+        }, 800);
 
     } catch (err) {
         console.error("Analysis failed", err);
@@ -165,23 +164,8 @@ async function triggerAnalysis() {
 function updateProgress(percent) {
     const rounded = Math.round(percent);
     progressPercent.textContent = `${rounded}%`;
-    const offset = 326.7 - (rounded / 100 * 326.7);
+    const offset = PROGRESS_MAX - (rounded / 100 * PROGRESS_MAX);
     progressCircle.style.strokeDashoffset = offset;
-}
-
-const streams = [
-    "ENCRYPTING BIOMETRIC DATA...",
-    "EXTRACTING DERMAL TEXTURES...",
-    "RUNNING NEURAL ESTIMATION...",
-    "CALIBRATING FATIGUE VECTORS...",
-    "MAPPING FACIAL LANDMARKS...",
-    "CROSS-REFERENCING LIFESTYLE CUES...",
-    "SYNCHRONIZING WITH CORE CLOUD..."
-];
-
-function updateDataStream() {
-    const text = streams[Math.floor(Math.random() * streams.length)];
-    dataStream.textContent = text;
 }
 
 function showResults(data) {
@@ -189,22 +173,38 @@ function showResults(data) {
     resultsSection.classList.remove('hidden');
     resultsGrid.innerHTML = '';
 
-    const keys = {
-        stressLevel: '🧠 Stress Level',
-        tiredness: '😴 Tiredness',
-        estimatedAge: '🎂 Estimated Age',
-        skinObservations: '✨ Skin Observations',
-        fatigueSigns: '📉 Fatigue Signs',
-        lifestyleHabits: '🧘 Lifestyle Habits'
-    };
+    const categories = [
+        { key: 'vitality', label: 'Vitality Index' },
+        { key: 'skin', label: 'Skin Resilience' },
+        { key: 'rest', label: 'Rest Quality' },
+        { key: 'age', label: 'Biological Age' }
+    ];
 
-    for (const [key, label] of Object.entries(keys)) {
-        if (data[key] || data.raw) {
-            const card = document.createElement('div');
-            card.className = 'result-card';
-            card.innerHTML = `<h3>${label}</h3><p>${data[key] || data.raw}</p>`;
-            resultsGrid.appendChild(card);
-        }
+    categories.forEach(cat => {
+        const item = data[cat.key];
+        if (!item) return;
+
+        const card = document.createElement('div');
+        const score = item.score || 0;
+        const colorClass = score > 80 ? 'score-high' : (score > 60 ? 'score-medium' : 'score-low');
+        
+        card.className = `score-card ${colorClass}`;
+        card.innerHTML = `
+            <h3>${cat.label}</h3>
+            <div class="score-display">
+                <span class="score-value">${score || item.range || '--'}</span>
+                <span class="score-total">${score ? '/100' : ''}</span>
+            </div>
+            <p class="score-observation">${item.observation || ''}</p>
+        `;
+        resultsGrid.appendChild(card);
+    });
+
+    if (data.recommendation) {
+        recommendationPanel.innerHTML = `
+            <h4>Daily Wellness Action</h4>
+            <p>"${data.recommendation.action}"</p>
+        `;
     }
 }
 

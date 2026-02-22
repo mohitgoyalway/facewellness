@@ -3,69 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BioScan AI | Facial Analysis</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <title>Daily Face Wellness AI Scan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <!-- Load face-api.js from CDN -->
     <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 </head>
-<body class="dark-mode">
-    <div class="background-grid"></div>
+<body class="premium-dark">
+    <div class="background-overlay"></div>
     <div class="container">
         <header>
-            <h1 class="glow-text">BIOSCAN <span class="v2">v2.0</span></h1>
-            <p class="subtitle">Neural Network Facial Diagnostics</p>
+            <h1 class="brand-title">Daily Face Wellness <span class="accent">AI Scan</span></h1>
+            <p class="tagline">Authentic biometric analysis for your skin health.</p>
         </header>
         
         <main>
-            <div id="setupView" class="setup-view">
-                <div class="scanner-frame">
-                    <div class="placeholder-circle">
-                        <div class="pulse-ring"></div>
-                        <i class="camera-icon"></i>
-                    </div>
+            <!-- INITIALIZATION / START VIEW -->
+            <div id="setupView" class="view-panel">
+                <div class="hero-circle">
+                    <div class="inner-pulse"></div>
+                    <div class="icon-camera"></div>
                 </div>
-                <button id="startScanner" class="sci-fi-btn">INITIALIZE SYSTEM</button>
+                <p class="instruction">Position yourself in good lighting for a precise biometric scan.</p>
+                <button id="startScanner" class="premium-btn">BEGIN SCAN</button>
             </div>
 
-            <div id="scannerView" class="scanner-view hidden">
-                <div class="video-container">
+            <!-- SCANNER VIEW -->
+            <div id="scannerView" class="view-panel hidden">
+                <div class="video-frame">
                     <video id="video" autoplay muted playsinline></video>
                     <canvas id="overlay"></canvas>
-                    <div class="scan-line"></div>
-                    <div class="corner tl"></div>
-                    <div class="corner tr"></div>
-                    <div class="corner bl"></div>
-                    <div class="corner br"></div>
                     
-                    <div id="statusIndicator" class="status-indicator">
-                        <span class="status-dot"></span>
-                        <span id="statusText">WAITING FOR SUBJECT...</span>
+                    <div id="scanStatus" class="scan-status-overlay">
+                        <div class="status-chip">
+                            <span class="status-indicator"></span>
+                            <span id="statusText">INITIALIZING...</span>
+                        </div>
                     </div>
-                </div>
 
-                <div id="analysisOverlay" class="analysis-overlay hidden">
-                    <div class="progress-container">
-                        <svg class="progress-ring" width="120" height="120">
-                            <circle class="progress-ring__circle" stroke="var(--primary-glow)" stroke-width="4" fill="transparent" r="52" cx="60" cy="60"/>
-                        </svg>
-                        <div id="progressPercent" class="progress-percent">0%</div>
+                    <!-- Analysis Animation -->
+                    <div id="analysisOverlay" class="analysis-layer hidden">
+                        <div class="glass-loader">
+                            <svg class="progress-ring" width="160" height="160">
+                                <circle class="progress-ring__circle" stroke="rgba(255,255,255,0.2)" stroke-width="2" fill="transparent" r="76" cx="80" cy="80"/>
+                                <circle id="progressCircle" class="progress-ring__circle active" stroke="#fff" stroke-width="2" fill="transparent" r="76" cx="80" cy="80"/>
+                            </svg>
+                            <div class="loading-content">
+                                <span id="progressPercent" class="percent">0%</span>
+                                <span class="label">ANALYZING</span>
+                            </div>
+                        </div>
+                        <div class="shimmer-text">Processing biometric markers...</div>
                     </div>
-                    <p class="analysis-text">ANALYZING BIOMETRICS...</p>
-                    <div class="data-stream" id="dataStream"></div>
                 </div>
             </div>
 
-            <section id="resultsSection" class="results-section hidden">
+            <!-- RESULTS VIEW -->
+            <section id="resultsSection" class="view-panel hidden">
                 <div class="results-header">
-                    <h2>DIAGNOSTIC REPORT</h2>
-                    <button id="resetBtn" class="reset-btn">NEW SCAN</button>
+                    <h2>Your Wellness Report</h2>
+                    <button id="resetBtn" class="text-btn">RESCAN</button>
                 </div>
-                <div class="results-grid" id="resultsGrid">
-                    <!-- Results will be injected here -->
+                
+                <div class="results-container">
+                    <div id="resultsGrid" class="results-grid">
+                        <!-- Score cards will be injected here -->
+                    </div>
+                    
+                    <div id="recommendationPanel" class="recommendation-panel">
+                        <!-- Recommendation will be injected here -->
+                    </div>
                 </div>
             </section>
         </main>
+        
+        <footer>
+            <p>&copy; 2026 Daily Face Wellness AI. Private & Secure.</p>
+        </footer>
     </div>
     <script src="script.js"></script>
 </body>
