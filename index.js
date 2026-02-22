@@ -79,34 +79,75 @@ app.get('/health', (req, res) => {
 app.post('/analyze', async (req, res) => {
   updateStats(s => s.scans++);
   try {
-    const { imageBase64, mimeType, bpm } = req.body;
+    const { imageBase64, mimeType, biometrics } = req.body;
 
     if (!imageBase64 || !mimeType) {
       return res.status(400).json({ error: 'Image data and mimeType are required' });
     }
 
     const prompt = `
-      Perform a deep, professional facial wellness analysis on this image. 
-      The user's measured Heart Rate (BPM) during the scan was: ${bpm || 'N/A'} BPM.
+      Perform a deep, professional facial wellness and biometric analysis on this image. 
+      You are acting as a Digital Bio-Scanner.
       
-      Analyze the following visual markers and correlate them with the BPM if available:
-      - Energy: Eye brightness, posture, muscle tone.
-      - Skin: Texture, hydration, evenness, dark circles.
-      - Sleep: Under-eye bags, puffiness, redness in eyes.
-      - Heart: Correlate the provided BPM (${bpm}) with visual signs like skin flushing, earlobe creases, and overall circulation appearance. If BPM is high, look for signs of stress.
-      - Sugar: Skin tags, acanthosis nigricans, facial puffiness.
-      - Liver: Scleral icterus (yellowing of eyes), skin tone clarity.
+      RECORDED BIOMETRICS (Deterministically calculated from 15-second video stream):
+      - Heart Rate: ${biometrics?.bpm || 'N/A'} BPM
+      - Respiration Rate: ${biometrics?.respiration || 'N/A'} breaths/min
+      - Blink Rate: ${biometrics?.blinkRate || 'N/A'} blinks/min
+      - HRV (Heart Rate Variability Proxy): ${biometrics?.hrv || 'N/A'} ms
 
-      For each category, provide a numeric score (1-100, where 100 is optimal/healthy) and a very concise observation (max 10 words).
-      
-      Simplified Categories for Analysis:
-      1. Energy Level (Instead of Vitality Index)
-      2. Skin Health (Instead of Skin Resilience)
-      3. Sleep Quality (Instead of Rest Quality)
-      4. Face Age (Instead of Biological Age)
-      5. Heart Health (Instead of Cardiovascular Harmony)
-      6. Sugar Balance (Instead of Metabolic Balance)
-      7. Liver Health (Instead of Internal Filter)
+      TASK:
+      Analyze the provided image and synthesize it with the recorded biometrics to provide a comprehensive health report.
+
+      1. VITALS ANALYSIS:
+         - Compare the BPM and Respiration against standard resting ranges (BPM 60-100, Resp 12-20).
+         - Use the Blink Rate to infer Stress/Autonomic Nervous System activity.
+
+      2. DERMATOLOGICAL MARKERS:
+         - Detect and score (1-100): Acne, Rosacea, Hyperpigmentation, Wrinkles, UV damage, Pore size, Skin hydration (proxy), and Oiliness.
+
+      3. SYSTEMIC & CLINICAL SCREENING:
+         - Anemia: Check for paleness in the lower eyelid (conjunctiva) and lip pallor.
+         - Jaundice: Check for yellowing (bilirubin signal) in the sclera (white of eyes).
+
+      4. CARDIOMETABOLIC & LIFESTYLE:
+         - Estimate Biological Age and compare to "Face Age".
+         - Infer "Facial Adiposity" to estimate BMI/Cardiovascular risk.
+         - Detect signs of Sleep Deprivation (bags, dark circles, dullness).
+
+      5. WELLNESS INDEX:
+         - Create a composite "Overall Wellness Score" (1-100) based on vitals, skin, and systemic signs.
+
+      6. ARCHETYPE ANALYSIS:
+         - (Same as before: Mahabharat, Ramayana, or Manusmriti character based on facial features).
+
+      Return ONLY a JSON object with this structure:
+      {
+        "vitals": {
+          "heartRate": {"value": number, "status": "string"},
+          "respiration": {"value": number, "status": "string"},
+          "stress": {"score": number, "observation": "string"}
+        },
+        "dermatology": {
+          "acne": {"score": number},
+          "hyperpigmentation": {"score": number},
+          "wrinkles": {"score": number},
+          "hydration": {"score": number},
+          "uvDamage": {"score": number}
+        },
+        "systemic": {
+          "anemiaRisk": {"level": "Low/Med/High", "observation": "string"},
+          "jaundiceRisk": {"level": "Low/Med/High", "observation": "string"}
+        },
+        "lifestyle": {
+          "sleepQuality": {"score": number, "observation": "string"},
+          "cardioRisk": {"level": "Low/Med/High", "observation": "string"}
+        },
+        "wellnessIndex": number,
+        "age": {"faceAge": "string", "biologicalAge": "string"},
+        "archetype": {"name": "string", "reason": "string", "aura": "string"},
+        "secretTip": {"tip": "string"}
+      }
+    `;
       
       Archetype Analysis:
       8. Ancient Archetype: Based on facial features (eyes, jawline, forehead, presence/absence of beard, gender), identify the most matching character from the Mahabharat, Ramayana, or Manusmriti. 
